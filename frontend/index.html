@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HoopBeats AI</title>
+  <style>
+    body {
+      background-color: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    select, button {
+      margin: 10px;
+      padding: 10px;
+      font-size: 1rem;
+    }
+    audio {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏀 HoopBeats AI 🎧</h1>
+
+  <label for="game">Select Game:</label>
+  <select id="game">
+    <option value="" disabled selected>Loading games...</option>
+  </select>
+
+  <button onclick="generateGameTrack()">Generate Game Music</button>
+
+  <div id="result"></div>
+  <audio controls id="player" style="display:none;"></audio>
+
+  <script>
+    async function loadGames() {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/games");
+        const data = await res.json();
+        const select = document.getElementById("game");
+
+        // Clear loading text
+        select.innerHTML = "";
+
+        data.games.forEach((g, index) => {
+          const option = document.createElement("option");
+          option.value = g.mood;
+          option.textContent = `${g.team} vs ${g.opponent} | ${g.date} | Mood: ${g.mood}`;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        alert("Failed to load games. Make sure the FastAPI server is running.");
+      }
+    }
+
+    async function generateGameTrack() {
+      const mood = document.getElementById("game").value;
+      if (!mood) {
+        alert("Please select a game.");
+        return;
+      }
+
+      const res = await fetch(`http://127.0.0.1:8000/generate_track?mood=${mood}`);
+      const data = await res.json();
+
+      const result = document.getElementById("result");
+      const player = document.getElementById("player");
+
+      result.innerText = `🎶 Mood: ${data.mood} | 🎧 Track: ${data.generated_track}`;
+      player.src = `assets/${data.generated_track}`;
+      player.style.display = 'block';
+    }
+
+    window.onload = loadGames;
+  </script>
+</body>
+</html>
